@@ -1,0 +1,21 @@
+<MyLayout>
+    FloatLayout:
+        orientation: 'vertical'
+        size: root.width, root.height
+        Image:
+            id: imag
+            pos: ('0sp','40sp')
+            keep_ratio: True
+            source: 'head.png'
+
+        Label:
+            id: outcome
+            pos: ('0sp','-75sp')
+            font_size: '30sp'
+            text: "Ready!"
+
+        Button:
+            id: refresh
+            text: 'Toss the coin'
+            size_hint: (1, .1)
+            on_release: root.flip()
