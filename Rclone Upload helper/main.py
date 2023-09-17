@@ -234,7 +234,7 @@ if input(Fore.GREEN+"Enter y to confirm to upload \n for cancel press any key ::
     print(Fore.WHITE+"\n")
     try:
         for dir in new_dir:
-            rclone.copyto(in_path=dir['Path']+'/',out_path=drive_path,show_progress=True)
+            rclone.copyto(in_path=dir['Path']+'/',out_path=drive_path+dir['Path']+'/',show_progress=True)
         
         print(Fore.GREEN+"\nUploading the folders is complete\n")
         print(Fore.WHITE+"===============================================")
@@ -243,7 +243,7 @@ if input(Fore.GREEN+"Enter y to confirm to upload \n for cancel press any key ::
         print(Fore.WHITE+"\n")
 
         for file in new_files:
-            rclone.copy(in_path=file['Path'],out_path=drive_path,show_progress=True,ignore_existing=True)
+            rclone.copy(in_path=file['Path'],out_path=drive_path+file['Path'],show_progress=True,ignore_existing=True)
         print(Fore.GREEN+"\n New Files are uploaded ")
         print(Fore.WHITE+"\n")
 
