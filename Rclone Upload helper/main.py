@@ -10,10 +10,9 @@ from rclone_python import rclone
 
 
 
-drive_path = input("\nEnter the path of the drive \n>> ") 
-source_path = input("\nEnter the path of the source \n >> ")
+drive_path = input("Enter the path of the drive") 
+source_path = input("Enter the path of the source")
 
-print("=============Program Start=========================")
 
 
 if rclone.Callable is False:
@@ -33,7 +32,7 @@ if os.path.isdir('.rclone_logs') is True:
     os.system('rm -r .rclone_logs')
 
 try:
-    print(Fore.GREEN+"Fetching data from the source and the cloud .....\n")
+    print(Fore.GREEN+"\nFetching data from the source and the cloud .....\n")
 
     pbar = tqdm(total=100,ascii=False,colour='green',ncols=100,desc='Fetching the data :: ',unit="data")
 
@@ -65,17 +64,23 @@ try:
 
     pbar.update(20)
 
-    # os.system('rm -r .rclone_logs')
+    os.system("rm -r .rclone_logs")
 
     pbar.close()
 
-    print(Fore.GREEN+"\nDatat is fetch !!")
+    print(Fore.GREEN+"\nData is fetch !!")
 
 except Exception as error:
     print(Fore.RED+str(error))
     exit()
 
 print(Fore.WHITE+"===============================================")
+
+print(f'\n Total files in the source are :: {source_data.__len__()}')
+print(f'\n Total files in the drive are :: {target_data.__len__()}')
+
+print(Fore.WHITE+"===============================================")
+
 
 if target_data.__len__() == 0 and source_data.__len__() == 0:
     print(Fore.RED+"\n Note :: Source and the Drive both are empty !!!")
@@ -129,7 +134,7 @@ for i in range(0,max(source_data.__len__(),len(target_data))):
         pass
 
 
-print("+=================Processing Data==================+")
+print("\n+=================Processing Data==================+")
 
 new_files = []
 new_dir = []
@@ -143,21 +148,39 @@ print("\n New Folders are :: \n")
 
 
 for source in source_dir:
+    is_new_dir = True
     for target in target_dir:
         if source['Path'] == target['Path']:
-            print(f'\t>>>\t{source["Path"]}')
+            is_new_dir = False
             break
-    new_dir.append(source)
+    if is_new_dir is True:
+        new_dir.append(source)
+
+temp_new_dir = []
+
+for i in range(0,new_dir.__len__()):
+    temp_new_dir_bool = True
+
+    for j in range(0,new_dir.__len__()):
+        if (new_dir[j])['Path']  in (new_dir[i])['Path']:
+            temp_new_dir_bool = False
+            break
+    if temp_new_dir_bool:
+        temp_new_dir.append(new_dir[i])
+        os.system(f"du -sh {source_path+(temp_new_dir[-1])['Path']}")
+
+new_dir = temp_new_dir
+    
 
 if new_dir.__len__() == 0:
     print("\t\tNo New Folder is Found\n")
 else:
-    print(f"\n Total Number of New folders are : {new_dir.__len__()}")
+    print(f"\n Total Number of New folders are : {new_dir.__len__()}\n")
 
 print("===============================================")
 
 print("\n New Files are (excluding those whose are in new folders):: \n")
-print("\t\tSize(MB)\tName")
+print("   Size(MB)     Name")
 
 for source in source_data:
     
@@ -169,7 +192,6 @@ for source in source_data:
             in_new_dir = True
             source_data.remove(source)
             break
-    
     if in_new_dir is False:
         for target in target_data:
             if source['Path'] == target['Path']:
@@ -196,25 +218,25 @@ for source in source_data:
                     target_data.remove(target)
                     break
 
-    if is_done is False:
+    if is_done is False and source["IsDir"] is False and in_new_dir is False:
         new_files.append(source)
-        print(f">>> {source['Size']/(1024*1024)}\t{source['Path']}")
+        print(f">   {round(source['Size']/(1024*1024),4)}     {source['Path']}")
         size_of_upload = int(source['Size']) + size_of_upload
 
 if (new_files.__len__()) == 0:
-    print("\t\tNo New File")
+    print("\t\tNo New File\n")
 else:
-    print(f'\n Total Number of new files are :: {new_files.__len__()}')
+    print(f'\n Total Number of new files are :: {new_files.__len__()}\n')
 
 print("===============================================")
 
-if modified_files.__len__ !=0:
+if modified_files.__len__() !=0:
 
     print("\n Modified Files are :: \n")
-    print("\t\tSize(MB)\tName")
+    print("     Size(MB)       Name")
 
     for source in modified_files:
-        print(f">>> {source['Size']/(1024*1024)}\t{source['Path']}")
+        print(f">    {source['Size']/(1024*1024)}        {source['Path']}")
         size_of_upload = int(source['Size']) + size_of_upload
 
     print("===============================================")
@@ -223,33 +245,38 @@ if new_files.__len__() + modified_files.__len__() + new_dir.__len__() == 0:
     print(Fore.GREEN+"\tAll files are already in the cloud and all they are up to date")
     exit()
 
-print(Fore.WHITE+f"\nTotal Size of upload is :: {size_of_upload/(1024*1024)}")
+else: 
+    print(Fore.WHITE+f'\n Total number of new foloders are:: {new_dir.__len__()}')
+    print(Fore.WHITE+f'\n Total number of new files are:: {new_files.__len__()}')
+    print(Fore.WHITE+f'\nTotal number of the modified files are :: {modified_files.__len__()}')
+    print(Fore.WHITE+f"\nTotal Size of upload is :: {size_of_upload/(1024*1024)}\n")
 
-print(Fore.WHITE+"===============================================")
+print(Fore.WHITE+"===============================================\n")
 
-if input(Fore.GREEN+"Enter y to confirm to upload \n for cancel press any key :: \n >>>  ").lower() == 'y':
+if input(Fore.GREEN+"Enter y to confirm to upload for cancel press any key :: \n >>>  ").lower() == 'y':
 
     print("\n Uploading the New Folders")
 
     print(Fore.WHITE+"\n")
     try:
-        for dir in new_dir:
-            rclone.copyto(in_path=dir['Path']+'/',out_path=drive_path+dir['Path']+'/',show_progress=True)
-        
-        print(Fore.GREEN+"\nUploading the folders is complete\n")
-        print(Fore.WHITE+"===============================================")
+        if new_dir.__len__() != 0:
+            for dir in new_dir:
+                rclone.copyto(in_path=source_path+dir['Path'],out_path=drive_path+dir['Path'],show_progress=True)
+            
+            print(Fore.GREEN+"\nUploading the folders is complete\n")
+            print(Fore.WHITE+"===============================================")
 
-        print(Fore.GREEN+"\n Uploading the New Files and Modified Files")
-        print(Fore.WHITE+"\n")
+            print(Fore.GREEN+"\n Uploading the New Files and Modified Files")
+            print(Fore.WHITE+"\n")
 
         for file in new_files:
-            rclone.copy(in_path=file['Path'],out_path=drive_path+file['Path'],show_progress=True,ignore_existing=True)
+            rclone.copyto(in_path=source_path+file['Path'],out_path=drive_path+file['Path'],show_progress=True,ignore_existing=True)
         print(Fore.GREEN+"\n New Files are uploaded ")
         print(Fore.WHITE+"\n")
 
         time = str(dt.datetime.now())
         for file in modified_files:
-            rclone.copy(in_path=source_path+file['Path'],out_path=drive_path+file['Path']+f"({time})",show_progress=True,ignore_existing=True)
+            rclone.copyto(in_path=source_path+file['Path'],out_path=drive_path+file['Path']+f"({time})",show_progress=True,ignore_existing=True)
         print(Fore.GREEN+"\n New Files are uploaded \n")
 
         print(Fore.GREEN+"Uploaded complete\n")
@@ -258,10 +285,10 @@ if input(Fore.GREEN+"Enter y to confirm to upload \n for cancel press any key ::
 
         print(f' Note::  Number of Conficted files are :: {diff_extension_files.__len__()}')
         if diff_extension_files.__len__() != 0:
-            with open("./Confict.json",'r') as file:
+            with open("./Conflict.json",'w') as file:
                 writer = json.dumps(diff_extension_files) 
                 file.write(writer)
-            print("All confict are save in json files with there copy in the drive")
+            print("All conflict are save in json files with there copy in the drive")
 
         print(Fore.WHITE+"===============================================")
 
